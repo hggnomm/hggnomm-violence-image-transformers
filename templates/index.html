@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Violence Detection</title>
+</head>
+<body>
+    <h2>Upload ảnh để kiểm tra</h2>
+    <form method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*" required>
+        <input type="submit" value="Dự đoán">
+    </form>
+
+    {% if prediction %}
+        <h3>Kết quả: {{ prediction }}</h3>
+        <h4>Độ chính xác: {{ confidence }}%</h4>
+        <img src="{{ image_url }}" width="300">
+    {% endif %}
+</body>
+</html>
