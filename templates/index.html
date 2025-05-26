@@ -2,18 +2,44 @@
 <html>
 <head>
     <title>Violence Detection</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+        }
+
+        .container {
+            text-align: center;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="file"], input[type="submit"] {
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
-    <h2>Upload ảnh để kiểm tra</h2>
-    <form method="post" enctype="multipart/form-data">
-        <input type="file" name="file" accept="image/*" required>
-        <input type="submit" value="Dự đoán">
-    </form>
+    <div class="container">
+        <h2>Upload ảnh để kiểm tra</h2>
+        <form method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept="image/*" required><br>
+            <input type="submit" value="Dự đoán">
+        </form>
 
-    {% if prediction %}
-        <h3>Kết quả: {{ prediction }}</h3>
-        <h4>Độ chính xác: {{ confidence }}%</h4>
-        <img src="{{ image_url }}" width="300">
-    {% endif %}
+        {% if prediction %}
+            <h3>Kết quả: {{ prediction }}</h3>
+            <h4>Độ chính xác: {{ confidence }}%</h4>
+            <img src="{{ image_url }}" width="300">
+        {% endif %}
+    </div>
 </body>
 </html>

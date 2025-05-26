@@ -53,6 +53,7 @@ def main():
     # Dataloader từ new_data
     train_loader, val_loader = prepare_dataloaders("dataset/new_data", transform, batch_size, num_classes)
 
+
     # Load model ViT + weight cũ
     model = timm.create_model('vit_small_patch16_224', pretrained=False, num_classes=num_classes)
     model.load_state_dict(torch.load("checkpoints/vit_small_violence.pth"))

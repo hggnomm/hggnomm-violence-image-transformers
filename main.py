@@ -8,7 +8,6 @@ import os
 import random
 
 def main():
-    # --- Cấu hình ---
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("CUDA available:", torch.cuda.is_available())
 
@@ -27,15 +26,18 @@ def main():
 
     # --- Load dataset ---
     full_dataset = datasets.ImageFolder('dataset/train', transform=transform)
-    class_to_idx = full_dataset.class_to_idx  # ví dụ: {'non_violence': 0, 'violence': 1}
+    class_to_idx = full_dataset.class_to_idx  # example: {'non_violence': 0, 'violence': 1}
     print("Class to index mapping:", class_to_idx)
 
-    # --- Phân chia 10% mỗi class cho validation ---
+    # print("Total images in dataset/train:", len(full_dataset))
+    # return
+
+    # --- 10% each class cho validation ---
     indices_by_class = {cls: [] for cls in range(num_classes)}
     for idx, (_, label) in enumerate(full_dataset.samples):
         indices_by_class[label].append(idx)
 
-    # Shuffle để lấy ngẫu nhiên
+    # Shuffle random
     random.seed(42)
     for cls in indices_by_class:
         random.shuffle(indices_by_class[cls])
