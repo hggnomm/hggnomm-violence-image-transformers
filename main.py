@@ -6,6 +6,9 @@ from tqdm import tqdm
 import timm
 import os
 import random
+import csv
+from datetime import datetime
+import matplotlib.pyplot as plt
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -47,9 +50,18 @@ def main():
 
     for cls in range(num_classes):
         cls_indices = indices_by_class[cls]
-        val_count = int(0.1 * len(cls_indices))  # 10% mỗi class
+        val_count = int(0.1 * len(cls_indices))  # 10% mỗi class cho validation
         val_indices += cls_indices[:val_count]
         train_indices += cls_indices[val_count:]
+
+    # --- TEST MODE: Chỉ lấy 30% data để train thử ---
+    # """
+    # TODO: Khi chạy với full data, comment đoạn code này lại
+    # """
+    # # Lấy 30% data từ tập train
+    # train_indices = train_indices[:int(len(train_indices) * 0.3)]
+    # print(f"TEST MODE: Using only 30% of training data ({len(train_indices)} samples)")
+    # --- TEST END
 
     # Tạo Subset
     train_dataset = Subset(full_dataset, train_indices)
@@ -64,11 +76,13 @@ def main():
     # --- Load mô hình ---
     model = timm.create_model('vit_small_patch16_224', pretrained=True, num_classes=num_classes)
 
-    if os.path.exists('checkpoints/vit_small_violence.pth'):
-        model.load_state_dict(torch.load('checkpoints/vit_small_violence.pth'))
-        print("Loaded pretrained weights.")
-    else:
-        print("Training from scratch.")
+    # if os.path.exists('checkpoints/vit_small_violence.pth'):
+    #     model.load_state_dict(torch.load('checkpoints/vit_small_violence.pth'))
+    #     print("Loaded pretrained weights.")
+    # else:
+    #     print("Training from scratch.")
+    
+    print("Training from scratch with pretrained ViT weights.")
 
     model = model.to(device)
 
@@ -118,7 +132,31 @@ def main():
     # --- Save model ---
     os.makedirs('checkpoints', exist_ok=True)
     torch.save(model.state_dict(), 'checkpoints/vit_small_violence.pth')
-    print("Model saved to checkpoints/vit_small_violence1.pth")
+    print("Model saved to checkpoints/vit_small_violence.pth")
+
+    # --- Lưu lại kết quả train vào file CSV để tiện so sánh các lần train ---
+    result_file = 'train_results.csv'
+    model_name = 'ViT-default-model'  # Có thể sửa tên này cho các mô hình khác
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    result_row = [now, model_name, num_epochs, round(train_acc, 4), round(val_acc, 4), round(avg_loss, 4)]
+    header = ['datetime', 'model', 'epochs', 'train_acc', 'val_acc', 'train_loss']
+    file_exists = os.path.isfile(result_file)
+    with open(result_file, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(header)
+        writer.writerow(result_row)
+    print(f"Đã lưu kết quả train vào {result_file} để tiện so sánh các lần train.")
+
+    # --- Plot kết quả train/fine-tune ---
+    plt.figure(figsize=(10, 5))
+    plt.plot(range(1, num_epochs + 1), [train_acc] * num_epochs, label='Train Accuracy')
+    plt.plot(range(1, num_epochs + 1), [val_acc] * num_epochs, label='Validation Accuracy')
+    plt.title('Train and Validation Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.savefig('plots/train_results_comparison.png', dpi=300, bbox_inches='tight')
 
 if __name__ == '__main__':
     main()

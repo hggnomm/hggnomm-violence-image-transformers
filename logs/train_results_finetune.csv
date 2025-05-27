@@ -1,0 +1,2 @@
+datetime,model,epochs,train_acc,val_acc,train_loss
+2025-05-26 23:03:42,ViT-small-finetune-30%,5,100.0,98.6466,0.0062

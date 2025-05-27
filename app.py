@@ -6,16 +6,47 @@ import timm
 from flask import Flask, request, render_template
 import os
 
-# Cấu hình
+# ==== Định nghĩa 2 hàm khởi tạo model ====
+def get_vit_model(num_classes=2, pretrained=False):
+    model = timm.create_model('vit_small_patch16_224', pretrained=pretrained, num_classes=num_classes)
+    return model
+
+def get_cnns_vit_model(num_classes=2, pretrained_vit=True):
+    class CNNs_ViT(nn.Module):
+        def __init__(self, num_classes=2):
+            super().__init__()
+            self.cnn = nn.Sequential(
+                nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+                nn.Conv2d(32, 3, kernel_size=3, stride=1, padding=1),
+                nn.BatchNorm2d(3),
+                nn.ReLU()
+            )
+            self.vit = timm.create_model('vit_small_patch16_224', pretrained=pretrained_vit, num_classes=num_classes)
+        def forward(self, x):
+            x = self.cnn(x)
+            x = self.vit(x)
+            return x
+    return CNNs_ViT(num_classes=num_classes)
+
+# ==== Cấu hình Flask ====
 app = Flask(__name__)
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Load model
+# ==== CHỌN MODEL TẠI ĐÂY ====
 num_classes = 2
-model = timm.create_model('vit_small_patch16_224', pretrained=False, num_classes=num_classes)
-model.load_state_dict(torch.load('model/vit_small_violence.pth', map_location=device))
+
+# Để dùng ViT gốc:
+# model = get_vit_model(num_classes=num_classes, pretrained=False)
+# model.load_state_dict(torch.load('checkpoints/vit_small_violence.pth', map_location=device))
+
+# Để dùng CNNs+ViT:
+model = get_cnns_vit_model(num_classes=num_classes, pretrained_vit=True)
+model.load_state_dict(torch.load('checkpoints/cnns_vit.pth', map_location=device))
+
 model.to(device)
 model.eval()
 

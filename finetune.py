@@ -6,6 +6,8 @@ from tqdm import tqdm
 import timm
 import os
 import random
+import csv
+from datetime import datetime
 
 def prepare_dataloaders(data_path, transform, batch_size, num_classes=2):
     dataset = datasets.ImageFolder(data_path, transform=transform)
@@ -52,6 +54,22 @@ def main():
 
     # Dataloader từ new_data
     train_loader, val_loader = prepare_dataloaders("dataset/new_data", transform, batch_size, num_classes)
+
+    # --- TEST MODE: Chỉ lấy 30% data để fine-tune thử ---
+    # """
+    # TODO: Khi chạy với full data, comment đoạn code này lại
+    # """
+    # train_dataset = train_loader.dataset
+    # if hasattr(train_dataset, 'indices'):
+    #     train_indices = train_dataset.indices
+    # else:
+    #     train_indices = list(range(len(train_dataset)))
+    # train_indices = train_indices[:int(len(train_indices) * 0.3)]
+    # train_dataset = Subset(train_dataset.dataset, train_indices)
+    # train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
+    # print(f"TEST MODE: Using only 30% of fine-tune training data ({len(train_indices)} samples)")
+
+    # --- test mode end ---
 
 
     # Load model ViT + weight cũ
@@ -104,6 +122,21 @@ def main():
     os.makedirs("checkpoints", exist_ok=True)
     torch.save(model.state_dict(), "checkpoints/vit_small_violence_finetuned.pth")
     print("Fine-tuned model saved to checkpoints/vit_small_violence_finetuned.pth")
+
+    # --- Lưu lại kết quả fine-tune vào file CSV để tiện so sánh ---
+    os.makedirs('logs', exist_ok=True)
+    result_file = 'logs/train_results_finetune.csv'
+    model_name = 'ViT-model-more-data'  # Có thể sửa tên này cho các mô hình khác
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    result_row = [now, model_name, num_epochs, round(train_acc, 4), round(val_acc, 4), round(total_loss/total, 4)]
+    header = ['datetime', 'model', 'epochs', 'train_acc', 'val_acc', 'train_loss']
+    file_exists = os.path.isfile(result_file)
+    with open(result_file, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(header)
+        writer.writerow(result_row)
+    print(f"Đã lưu kết quả fine-tune vào {result_file} để tiện so sánh các lần train.")
 
 if __name__ == "__main__":
     main()

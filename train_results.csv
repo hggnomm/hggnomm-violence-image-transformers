@@ -1,0 +1,4 @@
+datetime,model,epochs,train_acc,val_acc,train_loss
+5/27/2025 0:21,ViT-default-model,10,99.418,96.748,0.0158
+,,,,,
+,,,,,
