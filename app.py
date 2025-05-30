@@ -40,12 +40,12 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 num_classes = 2
 
 # Để dùng ViT gốc:
-# model = get_vit_model(num_classes=num_classes, pretrained=False)
-# model.load_state_dict(torch.load('checkpoints/vit_small_violence.pth', map_location=device))
+model = get_vit_model(num_classes=num_classes, pretrained=False)
+model.load_state_dict(torch.load('checkpoints/vit_small_violence_finetuned.pth', map_location=device))
 
 # Để dùng CNNs+ViT:
-model = get_cnns_vit_model(num_classes=num_classes, pretrained_vit=True)
-model.load_state_dict(torch.load('checkpoints/cnns_vit.pth', map_location=device))
+# model = get_cnns_vit_model(num_classes=num_classes, pretrained_vit=True)
+# model.load_state_dict(torch.load('checkpoints/cnns_vit.pth', map_location=device))
 
 model.to(device)
 model.eval()

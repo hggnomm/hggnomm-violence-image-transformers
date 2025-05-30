@@ -1,4 +1,2 @@
-datetime,model,epochs,train_acc,val_acc,train_loss
-5/27/2025 19:51,CNNs+ViT-model,10,98.9464,95.5736,0.028
-,,,,,
-,,,,,
+datetime,model,epochs,train_acc,val_acc,train_loss,training_time
+5/29/2025 1:08,CNNs+ViT-model,10,99.0066,97.561,0.0271,0:40:18

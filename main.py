@@ -9,6 +9,7 @@ import random
 import csv
 from datetime import datetime
 import matplotlib.pyplot as plt
+import time  # Add time module for tracking
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -90,6 +91,9 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
+    # Start timing
+    start_time = time.time()
+
     # --- Train ---
     for epoch in range(num_epochs):
         model.train()
@@ -129,17 +133,25 @@ def main():
         val_acc = correct / total * 100
         print(f"Validation Accuracy: {val_acc:.2f}%")
 
+    # Calculate total training time
+    total_time = time.time() - start_time
+    hours = int(total_time // 3600)
+    minutes = int((total_time % 3600) // 60)
+    seconds = int(total_time % 60)
+    training_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
     # --- Save model ---
     os.makedirs('checkpoints', exist_ok=True)
     torch.save(model.state_dict(), 'checkpoints/vit_small_violence.pth')
     print("Model saved to checkpoints/vit_small_violence.pth")
 
     # --- Lưu lại kết quả train vào file CSV để tiện so sánh các lần train ---
-    result_file = 'train_results.csv'
+    os.makedirs('logs', exist_ok=True)
+    result_file = 'logs/train_results.csv'
     model_name = 'ViT-default-model'  # Có thể sửa tên này cho các mô hình khác
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    result_row = [now, model_name, num_epochs, round(train_acc, 4), round(val_acc, 4), round(avg_loss, 4)]
-    header = ['datetime', 'model', 'epochs', 'train_acc', 'val_acc', 'train_loss']
+    result_row = [now, model_name, num_epochs, round(train_acc, 4), round(val_acc, 4), round(avg_loss, 4), training_time]
+    header = ['datetime', 'model', 'epochs', 'train_acc', 'val_acc', 'train_loss', 'training_time']
     file_exists = os.path.isfile(result_file)
     with open(result_file, 'a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
@@ -147,16 +159,7 @@ def main():
             writer.writerow(header)
         writer.writerow(result_row)
     print(f"Đã lưu kết quả train vào {result_file} để tiện so sánh các lần train.")
-
-    # --- Plot kết quả train/fine-tune ---
-    plt.figure(figsize=(10, 5))
-    plt.plot(range(1, num_epochs + 1), [train_acc] * num_epochs, label='Train Accuracy')
-    plt.plot(range(1, num_epochs + 1), [val_acc] * num_epochs, label='Validation Accuracy')
-    plt.title('Train and Validation Accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.legend()
-    plt.savefig('plots/train_results_comparison.png', dpi=300, bbox_inches='tight')
+    print(f"Tổng thời gian training: {training_time}")
 
 if __name__ == '__main__':
     main()

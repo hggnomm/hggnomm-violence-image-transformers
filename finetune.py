@@ -8,6 +8,7 @@ import os
 import random
 import csv
 from datetime import datetime
+import time  # Add time module for tracking
 
 def prepare_dataloaders(data_path, transform, batch_size, num_classes=2):
     dataset = datasets.ImageFolder(data_path, transform=transform)
@@ -55,6 +56,13 @@ def main():
     # Dataloader từ new_data
     train_loader, val_loader = prepare_dataloaders("dataset/new_data", transform, batch_size, num_classes)
 
+    # In ra số lượng ảnh trong folder new_data
+    total_imgs = sum([len(files) for r, d, files in os.walk("dataset/new_data")])
+    num_train = len(train_loader.dataset)
+    num_val = len(val_loader.dataset)
+    print(f"Tổng số ảnh trong dataset/new_data: {total_imgs}")
+    print(f"Số ảnh train: {num_train} ({num_train/total_imgs*100:.2f}%) | Số ảnh val: {num_val} ({num_val/total_imgs*100:.2f}%)")
+
     # --- TEST MODE: Chỉ lấy 30% data để fine-tune thử ---
     # """
     # TODO: Khi chạy với full data, comment đoạn code này lại
@@ -81,6 +89,9 @@ def main():
     # Loss và Optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+
+    # Start timing
+    start_time = time.time()
 
     # Fine-tuning
     for epoch in range(num_epochs):
@@ -118,6 +129,13 @@ def main():
         val_acc = correct / total * 100
         print(f"Validation Accuracy: {val_acc:.2f}%")
 
+    # Calculate total training time
+    total_time = time.time() - start_time
+    hours = int(total_time // 3600)
+    minutes = int((total_time % 3600) // 60)
+    seconds = int(total_time % 60)
+    training_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
     # Lưu mô hình fine-tune
     os.makedirs("checkpoints", exist_ok=True)
     torch.save(model.state_dict(), "checkpoints/vit_small_violence_finetuned.pth")
@@ -128,8 +146,8 @@ def main():
     result_file = 'logs/train_results_finetune.csv'
     model_name = 'ViT-model-more-data'  # Có thể sửa tên này cho các mô hình khác
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    result_row = [now, model_name, num_epochs, round(train_acc, 4), round(val_acc, 4), round(total_loss/total, 4)]
-    header = ['datetime', 'model', 'epochs', 'train_acc', 'val_acc', 'train_loss']
+    result_row = [now, model_name, num_epochs, round(train_acc, 4), round(val_acc, 4), round(total_loss/total, 4), training_time]
+    header = ['datetime', 'model', 'epochs', 'train_acc', 'val_acc', 'train_loss', 'training_time']
     file_exists = os.path.isfile(result_file)
     with open(result_file, 'a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
@@ -137,6 +155,7 @@ def main():
             writer.writerow(header)
         writer.writerow(result_row)
     print(f"Đã lưu kết quả fine-tune vào {result_file} để tiện so sánh các lần train.")
+    print(f"Tổng thời gian training: {training_time}")
 
 if __name__ == "__main__":
     main()

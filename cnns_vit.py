@@ -8,6 +8,7 @@ import os
 import random
 import csv
 from datetime import datetime
+import time  # Add time module for tracking
 
 # Định nghĩa model kết hợp CNNs + ViT
 class CNNs_ViT(nn.Module):
@@ -91,6 +92,9 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
+    # Start timing
+    start_time = time.time()
+
     # Train
     for epoch in range(num_epochs):
         model.train()
@@ -124,6 +128,13 @@ def main():
         val_acc = correct / total * 100
         print(f"Validation Accuracy: {val_acc:.2f}%")
 
+    # Calculate total training time
+    total_time = time.time() - start_time
+    hours = int(total_time // 3600)
+    minutes = int((total_time % 3600) // 60)
+    seconds = int(total_time % 60)
+    training_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
     # Save model
     os.makedirs('checkpoints', exist_ok=True)
     torch.save(model.state_dict(), 'checkpoints/cnns_vit.pth')
@@ -134,8 +145,8 @@ def main():
     result_file = 'logs/train_results_cnns_vit.csv'
     model_name = 'CNNs+ViT-model'
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    result_row = [now, model_name, num_epochs, round(train_acc, 4), round(val_acc, 4), round(avg_loss, 4)]
-    header = ['datetime', 'model', 'epochs', 'train_acc', 'val_acc', 'train_loss']
+    result_row = [now, model_name, num_epochs, round(train_acc, 4), round(val_acc, 4), round(avg_loss, 4), training_time]
+    header = ['datetime', 'model', 'epochs', 'train_acc', 'val_acc', 'train_loss', 'training_time']
     file_exists = os.path.isfile(result_file)
     with open(result_file, 'a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
@@ -143,6 +154,7 @@ def main():
             writer.writerow(header)
         writer.writerow(result_row)
     print(f"Đã lưu kết quả train vào {result_file} để tiện so sánh các lần train.")
+    print(f"Tổng thời gian training: {training_time}")
 
 if __name__ == '__main__':
     main() 
